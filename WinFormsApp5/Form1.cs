@@ -6,121 +6,45 @@ namespace WinFormsApp5
 {
     public partial class Form1 : Form
     {
-        private Button[,] boardButtons;
-        private string currentPlayer;
-        private bool gameOver;
-
         public Form1()
         {
             InitializeComponent();
-            InitializeGame();
         }
 
-        private void InitializeGame()
+        private void btnConvert_Click(object sender, EventArgs e)
         {
-            boardButtons = new Button[3, 3];
-            currentPlayer = "X";
-            gameOver = false;
-            lblCurrentPlayer.Text = "Gracz X rozpoczyna";
-
-            
-            for (int i = 0; i < 3; i++)
+            try
             {
-                for (int j = 0; j < 3; j++)
-                {
-                    boardButtons[i, j] = new Button();
-                    boardButtons[i, j].Size = new System.Drawing.Size(100, 100);
-                    boardButtons[i, j].Location = new System.Drawing.Point(i * 100, j * 100);
-                    boardButtons[i, j].Font = new System.Drawing.Font("Arial", 24F, System.Drawing.FontStyle.Bold);
-                    boardButtons[i, j].Click += BoardButton_Click;
-                    Controls.Add(boardButtons[i, j]);
-                }
+                decimal amount = decimal.Parse(txtAmount.Text);
+                string fromCurrency = cbFrom.SelectedItem.ToString();
+                string toCurrency = cbTo.SelectedItem.ToString();
+                decimal result = ConvertCurrency(amount, fromCurrency, toCurrency);
+                lblResult.Text = $"{amount} {fromCurrency} = {result:F2} {toCurrency}";
             }
-
-            
-            Button newGameButton = new Button();
-            newGameButton.Text = "Nowa Gra";
-            newGameButton.Size = new System.Drawing.Size(100, 50);
-            newGameButton.Location = new System.Drawing.Point(350, 200);
-            newGameButton.Click += NewGameButton_Click;
-            Controls.Add(newGameButton);
-        }
-
-        private void BoardButton_Click(object sender, EventArgs e)
-        {
-            if (gameOver) return;
-
-            Button clickedButton = sender as Button;
-            if (clickedButton.Text != "") return;  
-
-            clickedButton.Text = currentPlayer;
-            if (CheckWin())
+            catch (Exception ex)
             {
-                lblCurrentPlayer.Text = $"{currentPlayer} Wygra³!";
-                gameOver = true;
-            }
-            else if (CheckDraw())
-            {
-                lblCurrentPlayer.Text = "Remis!";
-                gameOver = true;
-            }
-            else
-            {
-                currentPlayer = (currentPlayer == "X") ? "O" : "X";
-                lblCurrentPlayer.Text = $"{currentPlayer}'twoja kolej";
+                MessageBox.Show("Error: " + ex.Message, "Conversion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private bool CheckWin()
+        private decimal ConvertCurrency(decimal amount, string fromCurrency, string toCurrency)
         {
-            
-            for (int i = 0; i < 3; i++)
+            var rates = new System.Collections.Generic.Dictionary<string, decimal>
             {
-                if (boardButtons[i, 0].Text == currentPlayer &&
-                    boardButtons[i, 1].Text == currentPlayer &&
-                    boardButtons[i, 2].Text == currentPlayer)
-                    return true;
+                { "PLN", 1.0m },
+                { "USD", 0.22m },
+                { "RUB", 16.5m },
+                { "EUR", 0.20m },
+                { "BAT", 7.6m }
+            };
 
-                if (boardButtons[0, i].Text == currentPlayer &&
-                    boardButtons[1, i].Text == currentPlayer &&
-                    boardButtons[2, i].Text == currentPlayer)
-                    return true;
-            }
+            if (!rates.ContainsKey(fromCurrency) || !rates.ContainsKey(toCurrency))
+                throw new Exception("Invalid currency selected.");
 
-            if (boardButtons[0, 0].Text == currentPlayer &&
-                boardButtons[1, 1].Text == currentPlayer &&
-                boardButtons[2, 2].Text == currentPlayer)
-                return true;
+            decimal rateFromPLN = rates[fromCurrency];
+            decimal rateToPLN = rates[toCurrency];
 
-            if (boardButtons[0, 2].Text == currentPlayer &&
-                boardButtons[1, 1].Text == currentPlayer &&
-                boardButtons[2, 0].Text == currentPlayer)
-                return true;
-
-            return false;
-        }
-
-        private bool CheckDraw()
-        {
-            foreach (Button button in boardButtons)
-            {
-                if (button.Text == "") return false;
-            }
-            return true;
-        }
-
-        private void NewGameButton_Click(object sender, EventArgs e)
-        {
-            
-            foreach (Button button in boardButtons)
-            {
-                button.Text = "";
-            }
-
-            currentPlayer = "X";
-            gameOver = false;
-            lblCurrentPlayer.Text = "Gracz X rozpoczyna";
+            return amount / rateFromPLN * rateToPLN;
         }
     }
 }
-
